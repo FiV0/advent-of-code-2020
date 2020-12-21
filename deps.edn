@@ -2,7 +2,8 @@
 
  :deps
  {org.clojure/clojure {:mvn/version "1.10.1"}
-  org.clojure/core.match {:mvn/version "1.0.0"}}
+  org.clojure/core.match {:mvn/version "1.0.0"}
+  vvvvalvalval/scope-capture {:mvn/version "0.3.2"}}
 
  :mvn/repos
  {"central"        {:url "https://repo1.maven.org/maven2/"}
