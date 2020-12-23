@@ -43,93 +43,53 @@
 
 ;; part 2
 
-(def solve2-helper
-  (memoize
-   (fn [a b seen]
-     (let [item-a (peek a)
-           item-b (peek b)]
-       (cond (or (empty? a) (empty? b))
-             [(seq a) (seq b)]
-             (contains? seen [a b])
-             [(seq a) nil]
-             (and (> item-a item-b)
-                  (or (< (count (pop a)) item-a)
-                      (< (count (pop b)) item-b)))
-             (solve2-helper (-> (pop a)
-                                (conj item-a)
-                                (conj item-b))
-                            (pop b)
-                            (conj seen [a b]))
-             (and (< item-a item-b)
-                  (or (< (count (pop a)) item-a)
-                      (< (count (pop b)) item-b)))
-             (solve2-helper (pop a)
-                            (-> (pop b)
-                                (conj item-b)
-                                (conj item-a))
-                            (conj seen [a b]))
-             :else
-             (let [[win-a _] (solve2-helper (pop a) (pop b) #{})]
-               (if win-a
-                 (solve2-helper (-> (pop a)
-                                    (conj item-a)
-                                    (conj item-b))
-                                (pop b)
-                                (conj seen [a b]))
-                 (solve2-helper (pop a)
-                                (-> (pop b)
-                                    (conj item-b)
-                                    (conj item-a))
-                                (conj seen [a b])))))))))
-
-(def mem (atom {}))
+(defn into-queue [s]
+  (into clojure.lang.PersistentQueue/EMPTY s))
 
 (defn solve2 [a b]
   (loop [a a b b seen #{}]
-    (if (contains? @mem [a b])
-      (get @mem [a b])
-      (let [item-a (peek a)
-            item-b (peek b)]
-        (cond (or (empty? a) (empty? b))
-              (swap! mem assoc [a b] [(seq a) (seq b)])
-              (contains? seen [a b])
-              (swap! mem assoc [a b] [(seq a) nil])
-              (and (> item-a item-b)
-                   (or (< (count (pop a)) item-a)
-                       (< (count (pop b)) item-b)))
-              (recur (-> (pop a)
-                         (conj item-a)
-                         (conj item-b))
-                     (pop b)
-                     (conj seen [a b]))
-              (and (< item-a item-b)
-                   (or (< (count (pop a)) item-a)
-                       (< (count (pop b)) item-b)))
-              (recur (pop a)
-                     (-> (pop b)
-                         (conj item-b)
-                         (conj item-a))
-                     (conj seen [a b]))
-              :else
-              (let [[win-a _ :as res] (solve2 (pop a) (pop b))]
-                (swap! mem assoc [(pop a) (pop b)] res)
-                (if win-a
-                  (recur (-> (pop a)
-                             (conj item-a)
-                             (conj item-b))
-                         (pop b)
-                         (conj seen [a b]))
-                  (recur (pop a)
-                         (-> (pop b)
-                             (conj item-b)
-                             (conj item-a))
-                         (conj seen [a b])))))))))
+    (let [item-a (peek a)
+          item-b (peek b)]
+      (cond (or (empty? a) (empty? b))
+            [(seq a) (seq b)]
+            (contains? seen [a b])
+            [(seq a)nil]
+            (and (> item-a item-b)
+                 (or (< (count (pop a)) item-a)
+                     (< (count (pop b)) item-b)))
+            (recur (-> (pop a)
+                       (conj item-a)
+                       (conj item-b))
+                   (pop b)
+                   (conj seen [a b]))
+            (and (< item-a item-b)
+                 (or (< (count (pop a)) item-a)
+                     (< (count (pop b)) item-b)))
+            (recur (pop a)
+                   (-> (pop b)
+                       (conj item-b)
+                       (conj item-a))
+                   (conj seen [a b]))
+            :else
+            (let [[win-a _] (solve2 (->> (pop a) (take item-a) into-queue)
+                                    (->> (pop b) (take item-b) into-queue))]
+              (if win-a
+                (recur (-> (pop a)
+                           (conj item-a)
+                           (conj item-b))
+                       (pop b)
+                       (conj seen [a b]))
+                (recur (pop a)
+                       (-> (pop b)
+                           (conj item-b)
+                           (conj item-a))
+                       (conj seen [a b]))))))))
 
-(def res2 (solve2 (into clojure.lang.PersistentQueue/EMPTY (first in))
-                  (into clojure.lang.PersistentQueue/EMPTY (second in))))
+(def res2 (solve2 (into-queue  (first in))
+                  (into-queue (second in))))
 
-(->> (second res2)
+(->> (first res2)
      reverse
      (map-indexed (fn [i x] (* (inc i) x)))
      (apply +))
-;; => 291
+;; => 35196
